@@ -1,7 +1,12 @@
 package com.example.Event_Driven_Order_System.controller;
 
-import com.example.Event_Driven_Order_System.entity.Products;
+import com.example.Event_Driven_Order_System.dto.dtos.ProductDTO;
+import com.example.Event_Driven_Order_System.dto.request.AddProductRequest;
+import com.example.Event_Driven_Order_System.dto.response.AddProductResponse;
 import com.example.Event_Driven_Order_System.service.ProductService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +23,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Products> getAllProducts(){
-        return productService.getAllProducts();
+    public ResponseEntity<List<ProductDTO>> getAllProducts(){
+        List<ProductDTO> response = productService.getAllProducts();
+        return ResponseEntity.ok(response);
     }
     @PostMapping
-    public String addProduct(@RequestBody Products product){
-        productService.addProduct(product);
-        return "Done";
+    public ResponseEntity<AddProductResponse> addProduct(@Valid @RequestBody AddProductRequest request){
+        AddProductResponse response =  productService.addProduct(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
