@@ -16,8 +16,21 @@ public class Products {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(nullable = false, length = 20)
     private String name;
+
+    @Column(nullable = false)
     private double price;
+
+    @Column(nullable = false)
     private int discount;
+
+    @Column(nullable = false)
     private int quantity;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
 }

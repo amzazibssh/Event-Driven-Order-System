@@ -12,6 +12,8 @@ import com.example.Event_Driven_Order_System.exception.ProductNotFoundException;
 import com.example.Event_Driven_Order_System.repository.OrderRepository;
 import com.example.Event_Driven_Order_System.repository.ProductOrderRepository;
 import com.example.Event_Driven_Order_System.repository.ProductRepository;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -41,10 +43,20 @@ public class OrderService {
         return orderDTOList;
     }
 
+    @Retryable(
+            includes = ObjectOptimisticLockingFailureException.class,
+            maxRetries = 5,
+            delay = 200
+    )
     @Transactional
     public AddOrderResponse addOrder(AddOrderRequest request) {
         double total_price = 0.0;
-        Orders order = new Orders(new Date(), OrderState.PENDING, total_price);
+
+        Orders order = new Orders();
+        order.setOrder_date(new Date());
+        order.setStatus(OrderState.PENDING);
+        order.setTotal_price(total_price);
+
         List<ProductOrder> productOrderList = new ArrayList<>();
         List<String> noAvailableProduct = new ArrayList<>();
         for(Map.Entry<UUID, Integer> entry : request.productQuantity().entrySet()){
@@ -55,7 +67,13 @@ public class OrderService {
             }
             if(product.getQuantity() >= entry.getValue()){
                 total_price += entry.getValue() * product.getPrice();
-                ProductOrder productOrder = new ProductOrder(order, product, product.getPrice(), entry.getValue());
+
+                ProductOrder productOrder = new ProductOrder();
+                productOrder.setOrder(order);
+                productOrder.setProduct(product);
+                productOrder.setUnitPrice(product.getPrice());
+                productOrder.setQuantity(entry.getValue());
+
                 productOrderList.add(productOrder);
                 product.setQuantity(product.getQuantity() - entry.getValue());
             }else{
